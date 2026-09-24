@@ -1,9 +1,14 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	mw "loanapp/internal/middleware"
 	"loanapp/internal/model"
@@ -76,4 +81,37 @@ func (h *LoanHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(loans)
+}
+
+func canAccessLoan(user mw.AuthUser, loan *model.LoanApplication) bool {
+	return user.Role == "petugas" || loan.UserID == user.UserID
+}
+
+func (h *LoanHandler) Get(w http.ResponseWriter, r *http.Request) {
+	user, ok := mw.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	loan, err := h.loans.GetByID(r.Context(), id)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.Is(err, sql.ErrNoRows) || (errors.As(err, &pgErr) && pgErr.Code == "22P02") {
+			http.Error(w, "loan application not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "failed to get loan application", http.StatusInternalServerError)
+		return
+	}
+
+	// Sengaja 404 (bukan 403) supaya tidak membocorkan bahwa loan ini ada.
+	if !canAccessLoan(user, loan) {
+		http.Error(w, "loan application not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(loan)
 }

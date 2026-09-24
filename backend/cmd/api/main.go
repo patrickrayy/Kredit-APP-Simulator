@@ -53,6 +53,7 @@ func main() {
 		r.Use(mw.AuthRequired)
 		r.Post("/", loanHandler.Create)
 		r.Get("/", loanHandler.List)
+		r.Get("/{id}", loanHandler.Get)
 	})
 
 	log.Println("server listening on :8080")

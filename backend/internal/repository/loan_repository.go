@@ -51,3 +51,14 @@ func (r *LoanRepository) ListAll(ctx context.Context) ([]model.LoanApplication, 
 	}
 	return loans, nil
 }
+
+func (r *LoanRepository) GetByID(ctx context.Context, id string) (*model.LoanApplication, error) {
+	var loan model.LoanApplication
+	query := `
+	SELECT id, user_id, amount, purpose, status, reviewed_by, review_note, created_at, updated_at
+	FROM loan_applications WHERE id = $1`
+	if err := r.db.GetContext(ctx, &loan, query, id); err != nil {
+		return nil, err
+	}
+	return &loan, nil
+}
