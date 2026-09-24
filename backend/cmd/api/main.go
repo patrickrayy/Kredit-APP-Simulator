@@ -9,6 +9,9 @@ import (
 	chimw "github.com/go-chi/chi/v5/middleware"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+
+	"loanapp/internal/handler"
+	"loanapp/internal/repository"
 )
 
 func main() {
@@ -36,6 +39,10 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
+	userRepo := repository.NewUserRepository(db)
+	authHandler := handler.NewAuthHandler(userRepo)
+
+	r.Post("/api/auth/register", authHandler.Register)
 	log.Println("server listening on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatalf("server failed: %v", err)
