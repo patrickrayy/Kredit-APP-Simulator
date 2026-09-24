@@ -43,6 +43,9 @@ func main() {
 	authHandler := handler.NewAuthHandler(userRepo)
 
 	r.Post("/api/auth/register", authHandler.Register)
+	r.Post("/api/auth/login", authHandler.Login)
+	r.Post("/api/auth/logout", authHandler.Logout)
+
 	log.Println("server listening on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatalf("server failed: %v", err)
