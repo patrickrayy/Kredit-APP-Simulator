@@ -49,11 +49,19 @@ func main() {
 	loanRepo := repository.NewLoanRepository(db)
 	loanHandler := handler.NewLoanHandler(loanRepo)
 
+	docRepo := repository.NewDocumentRepository(db)
+	documentHandler := handler.NewDocumentHandler(loanRepo, docRepo, "uploads")
+	if err := os.MkdirAll("uploads", 0o755); err != nil {
+		log.Fatalf("create upload dir failed: %v", err)
+	}
+
 	r.Route("/api/loans", func(r chi.Router) {
 		r.Use(mw.AuthRequired)
 		r.Post("/", loanHandler.Create)
 		r.Get("/", loanHandler.List)
 		r.Get("/{id}", loanHandler.Get)
+		r.Post("/{id}/documents", documentHandler.Upload)
+		r.Get("/{id}/documents", documentHandler.List)
 
 		r.Group(func(r chi.Router) {
 			r.Use(mw.RequireRole("petugas"))
