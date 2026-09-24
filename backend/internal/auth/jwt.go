@@ -8,14 +8,22 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var ErrInvalidToken = errors.New("invalid token")
+var (
+	ErrInvalidToken = errors.New("invalid token")
+	ErrWeakSecret   = errors.New("JWT_SECRET must be set and at least 32 characters long")
+)
+
+const minSecretLength = 32
+
+func CheckSecret() error {
+	if len(os.Getenv("JWT_SECRET")) < minSecretLength {
+		return ErrWeakSecret
+	}
+	return nil
+}
 
 func jwtSecret() []byte {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		secret = "dev-secret-change-me"
-	}
-	return []byte(secret)
+	return []byte(os.Getenv("JWT_SECRET"))
 }
 
 type Claims struct {
@@ -41,7 +49,7 @@ func VerifyToken(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		return jwtSecret(), nil
-	})
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil || !token.Valid {
 		return nil, ErrInvalidToken
 	}

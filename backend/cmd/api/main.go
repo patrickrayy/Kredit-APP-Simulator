@@ -10,12 +10,16 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 
+	"loanapp/internal/auth"
 	"loanapp/internal/handler"
 	mw "loanapp/internal/middleware"
 	"loanapp/internal/repository"
 )
 
 func main() {
+	if err := auth.CheckSecret(); err != nil {
+		log.Fatal(err)
+	}
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		dsn = "postgres://loanapp:devpassword@localhost:5432/loanapp?sslmode=disable"

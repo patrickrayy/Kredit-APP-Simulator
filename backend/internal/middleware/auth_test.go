@@ -28,6 +28,7 @@ func TestAuthRequired_RejectMissingCookies(t *testing.T) {
 }
 
 func TestAuthRequired_AllowsValidToken(t *testing.T) {
+	t.Setenv("JWT_SECRET", "test-secret-that-is-at-least-32-chars-long")
 	token, err := auth.GenerateToken("user-1", "nasabah")
 	if err != nil {
 		t.Fatalf("GenerateToken returned error: %v", err)
