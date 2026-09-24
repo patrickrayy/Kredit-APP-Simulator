@@ -11,6 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"loanapp/internal/handler"
+	mw "loanapp/internal/middleware"
 	"loanapp/internal/repository"
 )
 
@@ -45,6 +46,14 @@ func main() {
 	r.Post("/api/auth/register", authHandler.Register)
 	r.Post("/api/auth/login", authHandler.Login)
 	r.Post("/api/auth/logout", authHandler.Logout)
+	loanRepo := repository.NewLoanRepository(db)
+	loanHandler := handler.NewLoanHandler(loanRepo)
+
+	r.Route("/api/loans", func(r chi.Router) {
+		r.Use(mw.AuthRequired)
+		r.Post("/", loanHandler.Create)
+		r.Get("/", loanHandler.List)
+	})
 
 	log.Println("server listening on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
