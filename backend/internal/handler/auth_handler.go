@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"loanapp/internal/auth"
+	mw "loanapp/internal/middleware"
 	"loanapp/internal/repository"
 )
 
@@ -51,6 +52,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Role selalu "nasabah" di endpoint publik ini — role tidak pernah
 	// dipercaya dari input client, supaya orang tidak bisa daftar sebagai
 	// "petugas" sendiri.
+
 	user, err := h.users.Create(r.Context(), req.FullName, req.Email, hash, "nasabah")
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -124,4 +126,26 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 	})
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	authUser, ok := mw.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.users.FindByID(r.Context(), authUser.UserID)
+	if err != nil {
+		// Token valid tapi user-nya sudah tidak ada di DB.
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "failed to load user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }

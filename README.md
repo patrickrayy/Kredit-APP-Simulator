@@ -68,6 +68,7 @@ Log in again afterwards — the role is stored inside the JWT.
 | `POST` | `/api/auth/register` | public | always creates a `nasabah` |
 | `POST` | `/api/auth/login` | public | sets the `token` HttpOnly cookie |
 | `POST` | `/api/auth/logout` | public | clears the cookie |
+| `GET` | `/api/auth/me` | authenticated | current user (`id`, `full_name`, `email`, `role`) |
 | `POST` | `/api/loans` | authenticated | new application starts as `pending` |
 | `GET` | `/api/loans` | authenticated | `nasabah`: own loans · `petugas`: all loans |
 | `GET` | `/api/loans/{id}` | owner or `petugas` | others get `404` |

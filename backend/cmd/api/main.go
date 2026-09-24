@@ -50,6 +50,8 @@ func main() {
 	r.Post("/api/auth/register", authHandler.Register)
 	r.Post("/api/auth/login", authHandler.Login)
 	r.Post("/api/auth/logout", authHandler.Logout)
+	r.With(mw.AuthRequired).Get("/api/auth/me", authHandler.Me)
+
 	loanRepo := repository.NewLoanRepository(db)
 	loanHandler := handler.NewLoanHandler(loanRepo)
 
