@@ -54,6 +54,11 @@ func main() {
 		r.Post("/", loanHandler.Create)
 		r.Get("/", loanHandler.List)
 		r.Get("/{id}", loanHandler.Get)
+
+		r.Group(func(r chi.Router) {
+			r.Use(mw.RequireRole("petugas"))
+			r.Patch("/{id}/review", loanHandler.Review)
+		})
 	})
 
 	log.Println("server listening on :8080")

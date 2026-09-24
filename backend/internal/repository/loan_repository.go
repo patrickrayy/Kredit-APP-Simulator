@@ -62,3 +62,17 @@ func (r *LoanRepository) GetByID(ctx context.Context, id string) (*model.LoanApp
 	}
 	return &loan, nil
 }
+
+func (r *LoanRepository) Review(ctx context.Context, id, reviewerID, status string, note *string) (*model.LoanApplication, error) {
+	var loan model.LoanApplication
+	query := `
+	UPDATE loan_applications
+	SET status = $1, reviewed_by = $2, review_note = $3, updated_at = now()
+	WHERE id = $4
+	RETURNING id, user_id, amount, purpose, status, reviewed_by, review_note, created_at, updated_at`
+	err := r.db.QueryRowxContext(ctx, query, status, reviewerID, note, id).StructScan(&loan)
+	if err != nil {
+		return nil, err
+	}
+	return &loan, nil
+}
